@@ -14,7 +14,7 @@ function App() {
     // Posición inicial: Centrada. Se usa 'items-start' en la clase contenedora 
     // y un margen superior grande para centrar verticalmente, evitando solapamiento.
     const searchBoxPosition = selectedLocation
-      ? "absolute top-4 left-4" // Posición final (esquina superior izquierda)
+      ? "absolute top-4 left-15" // Posición final (esquina superior izquierda)
       // Usamos el centrado perfecto.
       : "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"; // Posición inicial (centro)
     const handleLocationSelect = (location) => {
@@ -42,7 +42,91 @@ function App() {
                     />
                 </MapZonas>
 
-                {/* ... (MenuDerecho y su contenido se mantienen igual) ... */}
+                {/* Menú desplegable (solapa) */}
+                <MenuDerecho>
+
+                  {/* Título: El texto es negro por herencia, el acento es celeste */}
+                  <h3 className="text-xl font-light tracking-wide mb-6 text-[#012e46] border-b border-gray-400 pb-2">
+                    Filtros de Condiciones Médicas
+                  </h3>
+
+                  {/* Subtítulo de Contexto: Texto negro/oscuro */}
+                  <p className="text-sm font-medium mb-8 text-gray-800">
+                    Para darte recomendaciones más personalizadas, por favor, indica cuál de estas condiciones aplica para <span className="font-bold underline">ti</span>:
+                  </p>
+
+                  {/* Lista con casillas (Checkboxes) */}
+                  <ul className="space-y-4">
+
+                    {/* Item 1: Alergias respiratorias */}
+                    <li className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="opcion1"
+                        className="h-5 w-5 rounded border-gray-400 bg-white appearance-none
+                                  checked:bg-[#012e46] checked:text-[#012e46]
+                                  transition duration-200 cursor-pointer
+                                  focus:ring-2 focus:ring-[#012e46]"
+                      />
+                      <label htmlFor="opcion1" className="text-gray-900 text-base cursor-pointer">
+                        Alergias respiratorias
+                      </label>
+                    </li>
+
+                    {/* Item 2: Asma */}
+                    <li className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="opcion2"
+                        className="h-5 w-5 rounded border-gray-400 bg-white appearance-none
+                                  checked:bg-[#012e46] checked:text-[#012e46]
+                                  transition duration-200 cursor-pointer
+                                  focus:ring-2 focus:ring-[#012e46]"
+                      />
+                      <label htmlFor="opcion2" className="text-gray-900 text-base cursor-pointer">
+                        Asma
+                      </label>
+                    </li>
+
+                    {/* Item 3: Hipertensión */}
+                    <li className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="opcion3"
+                        className="h-5 w-5 rounded border-gray-400 bg-white appearance-none
+                                  checked:bg-[#012e46] checked:text-[#012e46]
+                                  transition duration-200 cursor-pointer
+                                  focus:ring-2 focus:ring-[#012e46]"
+                      />
+                      <label htmlFor="opcion3" className="text-gray-900 text-base cursor-pointer">
+                        Hipertensión
+                      </label>
+                    </li>
+
+                    {/* Item 4: EPOC */}
+                    <li className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        id="opcion4"
+                        className="h-5 w-5 rounded border-gray-400 bg-white appearance-none
+                                  checked:bg-[#012e46] checked:text-[#012e46]
+                                  transition duration-200 cursor-pointer
+                                  focus:ring-2 focus:ring-[#012e46]"
+                      />
+                      <label htmlFor="opcion4" className="text-gray-900 text-base cursor-pointer">
+                        EPOC
+                      </label>
+                    </li>
+
+                  </ul>
+
+                  {/* Botón de Aplicar Filtros: Contraste con el fondo */}
+                  <button className="mt-10 w-full py-2 rounded-lg bg-[#012e46] hover:bg-[#012e46] text-white font-semibold transition duration-300 shadow-lg">
+                    Aplicar Filtros
+                  </button>
+
+                </MenuDerecho>
+
             </div>
         </div>
     );

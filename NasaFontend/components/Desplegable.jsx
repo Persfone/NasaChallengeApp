@@ -9,7 +9,7 @@ const MenuDerecho = ({ children }) => {
   const openWidth = "w-96"; 
   
   // Efecto Glassmorphism con OPACIDAD MUY BAJA
-  const glassEffect = "bg-white/15 backdrop-blur-sm border border-white/40";
+  const glassEffect = "bg-black/15 backdrop-blur-sm border border-white/40";
   const shadowStyle = "shadow-2xl shadow-gray-700/50"; 
   // Color ACENTO CELESTE (Cyan)
   const accentColor = "bg-[#012e46] hover:text-[#012e46]"; 
