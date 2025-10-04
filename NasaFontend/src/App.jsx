@@ -11,8 +11,8 @@ function App() {
       <div className="w-[1920px] h-[1080px]">
 
         <MapZonas
-          center={{ lat: -34.6, lng: -58.38 }}
-          zoom={12}
+          center={{ lat: 39.8283, lng: -98.5795 }}
+          zoom={5}
           zonas={[
             {
               coords: [

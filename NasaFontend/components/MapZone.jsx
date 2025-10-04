@@ -2,7 +2,13 @@ import { MapContainer, TileLayer, Polygon } from "react-leaflet";
 
 const MapZonas = ({ zonas, center, zoom = 13 }) => {
   return (
-    <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
+    <MapContainer center={center} zoom={zoom} minZoom={3} maxZoom={9} className="h-full w-full"
+        maxBounds={[
+        [10, -125.0], // suroeste (Florida Keys + Hawaii fuera)
+        [50, -30.93457] // noreste (Maine)
+    ]}
+    maxBoundsViscosity={1.0} // 1.0 = totalmente bloqueado
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
