@@ -1,50 +1,36 @@
-import { useState } from 'react'
-import MapZonas from '/components/MapZone'
-import './App.css'
+import { useState } from 'react';
+import MapZonas from '/components/MapZone'; // Corrige la ruta y nombre
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
+
+  // Datos de ejemplo para las zonas
+  const zonasEjemplo = [
+    {
+      coordinates: [[51.505, -0.09], [51.51, -0.1], [51.51, -0.12]],
+      color: 'red'
+    }
+  ];
+
+  const center = [51.505, -0.09]; // Centro del mapa
 
   return (
-    <>
-    <div className="w-full h-[80vh] rounded overflow-hidden">
-      <div className="w-[1920px] h-[1080px]">
-
-        <MapZonas
-          center={{ lat: 39.8283, lng: -98.5795 }}
-          zoom={5}
-          zonas={[
-            {
-              coords: [
-                { lat: -34.60, lng: -58.38 },
-                { lat: -34.61, lng: -58.39 },
-                { lat: -34.62, lng: -58.37 },
-              ],
-              color: "green",
-            },
-            {
-              coords: [
-                { lat: -34.61, lng: -58.40 },
-                { lat: -34.62, lng: -58.41 },
-                { lat: -34.63, lng: -58.39 },
-              ],
-              color: "yellow",
-            },
-            {
-              coords: [
-                { lat: -34.64, lng: -58.38 },
-                { lat: -34.65, lng: -58.39 },
-                { lat : -34.66, lng: -58.37 },
-              ],
-              color: "red",
-            },
-          ]}
-          />
-        </div>
+    <div className="App">
+      <h1>Mapa de Zonas</h1>
+      <MapZonas 
+        zonas={zonasEjemplo} 
+        center={center} 
+        zoom={13} 
+      />
+      
+      <div className="card">
+        <button onClick={() => setCount((count) => count + 1)}>
+          count is {count}
+        </button>
       </div>
-
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;

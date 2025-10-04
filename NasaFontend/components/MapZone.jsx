@@ -1,30 +1,39 @@
-import { MapContainer, TileLayer, Polygon } from "react-leaflet";
+import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
+import { useEffect } from 'react';
+import 'leaflet/dist/leaflet.css';
+
+// Componente interno para manejar la lógica de useMap
+const MapEffect = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.invalidateSize();
+  }, [map]);
+
+  return null;
+};
 
 const MapZonas = ({ zonas, center, zoom = 13 }) => {
   return (
-    <MapContainer center={center} zoom={zoom} minZoom={3} maxZoom={9} className="h-full w-full"
-        maxBounds={[
-        [10, -125.0], // suroeste (Florida Keys + Hawaii fuera)
-        [50, -30.93457] // noreste (Maine)
-    ]}
-    maxBoundsViscosity={1.0} // 1.0 = totalmente bloqueado
+    <MapContainer 
+      center={center} 
+      zoom={zoom} 
+      style={{ height: '400px', width: '100%' }}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      {zonas.map((zona, idx) => (
-        <Polygon
+      
+      {zonas && zonas.map((zona, idx) => (
+        <Polygon 
           key={idx}
-          positions={zona.coords}  // un array de puntos [{lat, lng}, …]
-          pathOptions={{
-            fillColor: zona.color,
-            color: zona.color,
-            weight: 2,
-            fillOpacity: 0.5,
-          }}
+          positions={zona.coordinates}
+          pathOptions={{ color: zona.color || 'blue' }}
         />
       ))}
+      
+      <MapEffect />
     </MapContainer>
   );
 };
