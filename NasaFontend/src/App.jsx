@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import MapZonas from '/components/MapZone'
 import './App.css'
 
 function App() {
@@ -8,26 +7,42 @@ function App() {
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="w-full h-[80vh] rounded overflow-hidden">
+      <div className="w-[1920px] h-[1080px]">
+
+        <MapZonas
+          center={{ lat: -34.6, lng: -58.38 }}
+          zoom={12}
+          zonas={[
+            {
+              coords: [
+                { lat: -34.60, lng: -58.38 },
+                { lat: -34.61, lng: -58.39 },
+                { lat: -34.62, lng: -58.37 },
+              ],
+              color: "green",
+            },
+            {
+              coords: [
+                { lat: -34.61, lng: -58.40 },
+                { lat: -34.62, lng: -58.41 },
+                { lat: -34.63, lng: -58.39 },
+              ],
+              color: "yellow",
+            },
+            {
+              coords: [
+                { lat: -34.64, lng: -58.38 },
+                { lat: -34.65, lng: -58.39 },
+                { lat : -34.66, lng: -58.37 },
+              ],
+              color: "red",
+            },
+          ]}
+          />
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+
     </>
   )
 }
