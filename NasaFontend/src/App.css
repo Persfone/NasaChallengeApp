@@ -1,3 +1,22 @@
+<<<<<<< HEAD
  
 @import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
+=======
+@import "leaflet/dist/leaflet.css";
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.leaflet-container {
+  height: 400px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+/* Mantén solo los estilos esenciales, elimina los duplicados */
+>>>>>>> cfdb74f750f1a3ce6506c001cfcd65ffb70bee38
