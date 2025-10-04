@@ -7,8 +7,8 @@ function App() {
 
   return (
     <>
-    <div className="w-full h-[80vh] rounded overflow-hidden">
-      <div className="w-[1920px] h-[1080px]">
+    <div className="w-full h-full overflow-hidden">
+      <div className="w-full h-[100vh]">
 
         <MapZonas
           center={{ lat: 39.8283, lng: -98.5795 }}
