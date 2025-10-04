@@ -121,9 +121,10 @@ function App() {
                   </ul>
 
                   {/* Botón de Aplicar Filtros: Contraste con el fondo */}
-                  <button className="mt-10 w-full py-2 rounded-lg bg-[#012e46] hover:bg-[#012e46] text-white font-semibold transition duration-300 shadow-lg">
+                  <button className="mt-10 w-full py-2 rounded-lg bg-[#012e46] hover:bg-[#012e46] text-white font-semibold transition-transform duration-150 shadow-lg active:scale-95 active:shadow-md">
                     Aplicar Filtros
                   </button>
+
 
                 </MenuDerecho>
 
