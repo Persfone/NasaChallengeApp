@@ -8,6 +8,8 @@ export const SearchBox = ({ onLocationSelect }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const searchTimeoutRef = useRef(null);
+  const glassEffect = "bg-white/15 backdrop-blur-sm border border-white/40";
+  const shadowStyle = "shadow-2xl shadow-gray-700/50"; 
 
   const handleSearch = async (query) => {
     if (!query.trim()) {
@@ -68,61 +70,63 @@ export const SearchBox = ({ onLocationSelect }) => {
   };
 
   return (
-    <div className="absolute top-4 right-4 z-[1000] w-80">
-      <div className="bg-white rounded-lg shadow-lg">
+  <div className="absolute top-4 left-15 z-[1000] w-80">
+    <div className={`rounded-lg ${glassEffect} ${shadowStyle}`}>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <Search size={20} />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={handleInputChange}
-            placeholder="Buscar ciudad o lugar en USA..."
-            className="w-full pl-10 pr-10 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:outline-none"
-          />
-          {searchQuery && (
-            <button
-              onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <X size={20} />
-            </button>
-          )}
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#012e46]">
+                {/* El icono de búsqueda siempre visible */}
+                <Search size={20} />
+            </div>
+            <input
+                type="text"
+                value={searchQuery}
+                onChange={handleInputChange}
+                placeholder="Buscar ciudad o lugar en USA..."
+                className="w-full pl-10 pr-10 py-3 rounded-lg border-2 border-[#012e46] focus:outline-none bg-white/30 text-[#012e46] placeholder-[#012e46]"
+            />
+            {searchQuery && (
+                <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#012e46] hover:text-[#012e46]"
+                >
+                    {/* El icono de borrar (X) usando un color de texto que contraste */}
+                    <X size={20} />
+                </button>
+            )}
         </div>
 
         {showResults && (
-          <div className="mt-2 max-h-64 overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200">
-            {isSearching ? (
-              <div className="p-4 text-center text-gray-500">
-                Buscando...
-              </div>
-            ) : searchResults.length > 0 ? (
-              <ul>
-                {searchResults.map((result, idx) => (
-                  <li
-                    key={idx}
-                    onClick={() => handleSelectLocation(result)}
-                    className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="text-sm font-medium text-gray-900">
-                      {result.display_name.split(',')[0]}
+            <div className="mt-2 max-h-64 overflow-y-auto rounded-lg bg-white/30 backdrop-blur-md">
+                {isSearching ? (
+                    <div className="p-4 text-center text-[#012e46]">
+                        Buscando...
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {result.display_name}
+                ) : searchResults.length > 0 ? (
+                     <ul>
+                        {searchResults.map((result, idx) => (
+                            <li
+                                key={idx}
+                                onClick={() => handleSelectLocation(result)}
+                                className="p-3 hover:bg-white/50 cursor-pointer"
+                            >
+                                <div className="text-sm font-medium text-gray-900"> 
+                                    {result.display_name.split(',')[0]}
+                                </div>
+                                <div className="text-xs text-[#012e46] mt-1">
+                                    {result.display_name}
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="p-4 text-center text-[#012e46]">
+                        No se encontraron resultados
                     </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="p-4 text-center text-gray-500">
-                No se encontraron resultados
-              </div>
-            )}
-          </div>
+                )}
+            </div>
         )}
-      </div>
     </div>
+</div>
   );
 };
 
