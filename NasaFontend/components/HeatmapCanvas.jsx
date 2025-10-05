@@ -10,13 +10,23 @@ const HeatmapCanvas = ({ data = [], radius = 120, opacity = 0.9, intensityMultip
   const hasGeneratedRef = useRef(false);
 
   useEffect(() => {
-    if (!map || !data.length || hasGeneratedRef.current) return;
+    if (!map || !data.length) return;
 
-    hasGeneratedRef.current = true;
+    // Limpiar overlay anterior si existe
+    if (overlayRef.current) {
+      map.removeLayer(overlayRef.current);
+      overlayRef.current = null;
+    }
+
+    // Resetear flag para permitir regeneración
+    hasGeneratedRef.current = false;
 
     const generateHeatmap = () => {
       console.log(`Generando heatmap con ${data.length} puntos...`);
       console.log("Primeros 3 puntos:", data.slice(0, 3));
+
+      // Marcar como generado
+      hasGeneratedRef.current = true;
 
       // Filtrar y validar puntos
       const validPoints = data.filter(p => 
@@ -216,11 +226,13 @@ const HeatmapCanvas = ({ data = [], radius = 120, opacity = 0.9, intensityMultip
 
       if (overlayRef.current) {
         map.removeLayer(overlayRef.current);
+        overlayRef.current = null;
       }
 
       overlayRef.current = L.imageOverlay(imageUrl, bounds, {
         opacity: 1,
-        interactive: false
+        interactive: false,
+        pane: 'overlayPane' // Asegurar que use el pane correcto
       }).addTo(map);
 
       console.log("¡Heatmap completado!");
