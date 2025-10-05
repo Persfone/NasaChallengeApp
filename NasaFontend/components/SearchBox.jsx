@@ -1,6 +1,7 @@
 // /components/SearchBox.jsx
 import { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
+import {fetchAirQualityInArea} from './funcionesFetch';
 
 export const SearchBox = ({ onLocationSelect, positionClass }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -23,8 +24,8 @@ export const SearchBox = ({ onLocationSelect, positionClass }) => {
       setIsSearching(true);
       
       try {
-        const response = await fetch(`/nominatim/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5&email=guido@example.com`);
-;
+        // Fetch directo a Nominatim (sin proxy)
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5&email=guido@example.com`);
         const data = await response.json();
         setSearchResults(data);
         setShowResults(true);
@@ -52,6 +53,10 @@ export const SearchBox = ({ onLocationSelect, positionClass }) => {
     const handleSelectLocation = (result) => {
       const lat = parseFloat(result.lat);
       const lng = parseFloat(result.lon);
+      console.log('Ubicación seleccionada:', lat, lng, result.display_name);
+      console.log('Esquina Noreste:', getMapCorners([lat, lng], 12).noreste);
+      console.log('Esquina Suroeste:', getMapCorners([lat, lng], 12).suroeste);
+      console.log('Datos de calidad del aire en el área:', fetchAirQualityInArea(`${getMapCorners([lat, lng], 12).suroeste[1].toFixed(3)},${getMapCorners([lat, lng], 12).suroeste[0].toFixed(3)},${getMapCorners([lat, lng], 12).noreste[1].toFixed(3)},${getMapCorners([lat, lng], 12).noreste[0].toFixed(3)}`, 50, 'distributed'));
       
       onLocationSelect({
         center: [lat, lng],
@@ -69,6 +74,34 @@ export const SearchBox = ({ onLocationSelect, positionClass }) => {
       setShowResults(false);
       onLocationSelect(null);
     };
+    function getMapCorners(center, zoom, mapWidthPx = 800, mapHeightPx = 600) {
+        // Crea un mapa temporal en memoria
+        const map = L.map(document.createElement('div'), {
+            center,
+            zoom,
+            zoomControl: false,
+            attributionControl: false,
+            interactive: false,
+        });
+        map.setView(center, zoom);
+
+        // Simula el tamaño del mapa
+        map._size = L.point(mapWidthPx, mapHeightPx);
+
+        // Obtiene los bounds
+        const bounds = map.getBounds();
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        const nw = L.latLng(bounds.getNorth(), bounds.getWest());
+        const se = L.latLng(bounds.getSouth(), bounds.getEast());
+
+        return {
+            noreste: [ne.lat, ne.lng],
+            noroeste: [nw.lat, nw.lng],
+            sureste: [se.lat, se.lng],
+            suroeste: [sw.lat, sw.lng],
+        };
+    }
 
     // La barra de búsqueda con su contenedor y texto de guía
     const SearchBarContent = (
