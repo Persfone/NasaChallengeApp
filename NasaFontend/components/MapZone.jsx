@@ -70,7 +70,7 @@ const MapZonas = ({ zonas, center, zoom, selectedLocation, children, heatmapData
             }}
           />
         ))}
-        <HeatmapCanvas key={JSON.stringify(heatmapData)} data={heatmapData} radius={80} intensityMultiplier={0.5} />
+        <HeatmapCanvas key={JSON.stringify(heatmapData)} data={heatmapData} />
       </MapContainer>
     </div>
   );
