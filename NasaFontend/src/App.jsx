@@ -6,12 +6,21 @@ import { SearchBox } from "/components/SearchBox";
 import MapZonas from "/components/MapZone";
 import MenuDerecho from "/components/Desplegable";
 import "./App.css";
+import { fetchAERData, fetchNO2Data, fetchHCHOData, fetchO3Data, fetchSO2Data } from "../components/funcionesFetch";
 
 function App() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [heatmapData, setHeatmapData] = useState([]);
+  const [showTempoUSA, setShowTempoUSA] = useState(false);
 
-  function convertToIntensityPoints(airQualityData) {
+  function convertToIntensityPoints(allData) {
+    // allData: { airQuality, no2, so2, o3, hcho, aer }
+    const airQualityData = allData.airQuality;
+    const no2Data = allData.no2;
+    const so2Data = allData.so2;
+    const o3Data = allData.o3;
+    const hchoData = allData.hcho;
+    const aerData = allData.aer;
     const points = [];
 
     // Estándares de la OMS y EPA para clasificar la calidad del aire
@@ -58,81 +67,112 @@ function App() {
         veryUnhealthy: 15.4,
         hazardous: 30.4,
       },
+      hcho: {
+        good: 0.001,
+        moderate: 0.002,
+        unhealthy: 0.003,
+        veryUnhealthy: 0.004,
+        hazardous: 0.005,
+      },
+      aer: {
+        good: 0.01,
+        moderate: 0.02,
+        unhealthy: 0.03,
+        veryUnhealthy: 0.04,
+        hazardous: 0.05,
+      },
     };
 
-    // Función para calcular la intensidad basada en el valor y los umbrales
     function calculateIntensity(value, parameter) {
       const thresh = thresholds[parameter];
-      if (!thresh) return 0.1; // valor por defecto si no hay umbrales
-
-      // Normalizar a escala 0-1
+      if (!thresh) return 0.1;
       if (value <= thresh.good) {
-        return 0.05 + (value / thresh.good) * 0.15; // 0.05-0.20
+        return 0.05 + (value / thresh.good) * 0.15;
       } else if (value <= thresh.moderate) {
-        return (
-          0.2 + ((value - thresh.good) / (thresh.moderate - thresh.good)) * 0.2
-        ); // 0.20-0.40
+        return 0.2 + ((value - thresh.good) / (thresh.moderate - thresh.good)) * 0.2;
       } else if (value <= thresh.unhealthy) {
-        return (
-          0.4 +
-          ((value - thresh.moderate) / (thresh.unhealthy - thresh.moderate)) *
-            0.2
-        ); // 0.40-0.60
+        return 0.4 + ((value - thresh.moderate) / (thresh.unhealthy - thresh.moderate)) * 0.2;
       } else if (value <= thresh.veryUnhealthy) {
-        return (
-          0.6 +
-          ((value - thresh.unhealthy) /
-            (thresh.veryUnhealthy - thresh.unhealthy)) *
-            0.2
-        ); // 0.60-0.80
+        return 0.6 + ((value - thresh.unhealthy) / (thresh.veryUnhealthy - thresh.unhealthy)) * 0.2;
       } else if (value <= thresh.hazardous) {
-        return (
-          0.8 +
-          ((value - thresh.veryUnhealthy) /
-            (thresh.hazardous - thresh.veryUnhealthy)) *
-            0.15
-        ); // 0.80-0.95
+        return 0.8 + ((value - thresh.veryUnhealthy) / (thresh.hazardous - thresh.veryUnhealthy)) * 0.15;
       } else {
-        return Math.min(
-          0.95 + ((value - thresh.hazardous) / thresh.hazardous) * 0.05,
-          1.0
-        ); // 0.95-1.0
+        return Math.min(0.95 + ((value - thresh.hazardous) / thresh.hazardous) * 0.05, 1.0);
       }
     }
 
-    // Procesar cada ubicación
-    airQualityData.locations.forEach((location) => {
-      const measurements = location.measurements;
-      let totalIntensity = 0;
-      let count = 0;
-
-      // Calcular intensidad promedio de todos los parámetros disponibles
-      Object.keys(measurements).forEach((param) => {
-        const measurement = measurements[param];
-        if (measurement.available && measurement.latest_value !== null) {
-          const intensity = calculateIntensity(measurement.latest_value, param);
-          totalIntensity += intensity;
-          count++;
-        }
+    // Procesar airQualityData.locations si existe
+    if (airQualityData && airQualityData.locations) {
+      airQualityData.locations.forEach((location) => {
+        const measurements = location.measurements;
+        let totalIntensity = 0;
+        let count = 0;
+        Object.keys(measurements).forEach((param) => {
+          const measurement = measurements[param];
+          if (measurement.available && measurement.latest_value !== null) {
+            const intensity = calculateIntensity(measurement.latest_value, param);
+            totalIntensity += intensity;
+            count++;
+          }
+        });
+        const avgIntensity = count > 0 ? totalIntensity / count : 0.1;
+        points.push({
+          latitude: location.coordinates.latitude,
+          longitude: location.coordinates.longitude,
+          intensity: avgIntensity,
+          locationName: location.name,
+          measurements: measurements,
+        });
       });
+    }
 
-      // Si hay mediciones, calcular el promedio
-      const avgIntensity = count > 0 ? totalIntensity / count : 0.1;
-
-      points.push({
-        latitude: location.coordinates.latitude,
-        longitude: location.coordinates.longitude,
-        intensity: avgIntensity,
-        locationName: location.name,
-        measurements: measurements,
-      });
-    });
+    // Procesar datos de contaminantes individuales (NO2, SO2, O3, HCHO, AER)
+    function addPointsFromArray(arr, param) {
+      if (Array.isArray(arr)) {
+        arr.forEach((item) => {
+          if (item.lat !== undefined && item.lon !== undefined && item.value !== undefined) {
+            points.push({
+              latitude: item.lat,
+              longitude: item.lon,
+              intensity: calculateIntensity(item.value, param),
+              locationName: param.toUpperCase(),
+              measurements: { [param]: { latest_value: item.value } },
+            });
+          }
+        });
+      }
+    }
+    addPointsFromArray(no2Data, 'no2');
+    addPointsFromArray(so2Data, 'so2');
+    addPointsFromArray(o3Data, 'o3');
+    addPointsFromArray(hchoData, 'hcho');
+    addPointsFromArray(aerData, 'aer');
 
     return points;
   }
 
   useEffect(() => {
-  }, []);
+    if (!selectedLocation && showTempoUSA) {
+      // Cargar TEMPO para todo USA
+      const lat_min = 24;
+      const lat_max = 50;
+      const lon_min = -125;
+      const lon_max = -66;
+      Promise.all([
+        fetchNO2Data(lat_min, lat_max, lon_min, lon_max),
+        fetchSO2Data(lat_min, lat_max, lon_min, lon_max),
+        fetchO3Data(lat_min, lat_max, lon_min, lon_max),
+        fetchHCHOData(lat_min, lat_max, lon_min, lon_max),
+        fetchAERData(lat_min, lat_max, lon_min, lon_max)
+      ]).then(([no2, so2, o3, hcho, aer]) => {
+        const allData = { airQuality: null, no2, so2, o3, hcho, aer };
+        const weighted = convertToIntensityPoints(allData, true);
+        setHeatmapData(weighted);
+      });
+    } else if (!selectedLocation && !showTempoUSA) {
+      setHeatmapData([]);
+    }
+  }, [selectedLocation, showTempoUSA]);
 
   // Determina la clase de posición para SearchBox:
   // Posición inicial: Centrada. Se usa 'items-start' en la clase contenedora
@@ -189,6 +229,20 @@ function App() {
 
         {/* Menú desplegable (solapa) */}
         <MenuDerecho>
+          {/* Checkbox para mostrar TEMPO USA */}
+          <div className="mb-4 flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="showTempoUSA"
+              checked={showTempoUSA}
+              onChange={e => setShowTempoUSA(e.target.checked)}
+              className="h-5 w-5 rounded border-gray-400 bg-white appearance-none checked:bg-[#012e46] checked:text-[#012e46] transition duration-200 cursor-pointer focus:ring-2 focus:ring-[#012e46]"
+            />
+            <label htmlFor="showTempoUSA" className="text-gray-900 text-base cursor-pointer">
+              Mostrar Heatmap TEMPO para todo USA
+            </label>
+          </div>
+
           {/* Título: El texto es negro por herencia, el acento es celeste */}
           <h3 className="text-xl font-light tracking-wide mb-6 text-[#012e46] border-b border-gray-400 pb-2">
             Filtros de Condiciones Médicas

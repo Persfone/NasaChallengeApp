@@ -1,7 +1,7 @@
 // /components/SearchBox.jsx
 import { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
-import {fetchAirQualityInArea} from './funcionesFetch';
+import {fetchAirQualityInArea, fetchNO2Data, fetchSO2Data, fetchO3Data, fetchHCHOData, fetchAERData} from './funcionesFetch';
 
 export const SearchBox = ({ onLocationSelect, positionClass, onAirQualityData }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -50,7 +50,7 @@ export const SearchBox = ({ onLocationSelect, positionClass, onAirQualityData })
       }, 500);
     };
   
-    const handleSelectLocation = (result) => {
+    const handleSelectLocation = async (result) => {
       const lat = parseFloat(result.lat);
       const lng = parseFloat(result.lon);
       console.log('Ubicación seleccionada:', lat, lng, result.display_name);
@@ -58,11 +58,36 @@ export const SearchBox = ({ onLocationSelect, positionClass, onAirQualityData })
       console.log('Esquina Noreste:', corners.noreste);
       console.log('Esquina Suroeste:', corners.suroeste);
       const bbox = `${corners.suroeste[1].toFixed(3)},${corners.suroeste[0].toFixed(3)},${corners.noreste[1].toFixed(3)},${corners.noreste[0].toFixed(3)}`;
+      // Calcular los límites para los endpoints de contaminantes
+      const lat_min = Math.min(corners.suroeste[0], corners.noreste[0]);
+      const lat_max = Math.max(corners.suroeste[0], corners.noreste[0]);
+      const lon_min = Math.min(corners.suroeste[1], corners.noreste[1]);
+      const lon_max = Math.max(corners.suroeste[1], corners.noreste[1]);
+      // Fetch de todos los endpoints
       const airQualityPromise = fetchAirQualityInArea(bbox, 50, 'distributed');
-      console.log('Datos de calidad del aire en el área:', airQualityPromise);
+      const no2Promise = fetchNO2Data(parseInt(lat_min), parseInt(lat_max), parseInt(lon_min), parseInt(lon_max));
+      const so2Promise = fetchSO2Data(parseInt(lat_min), parseInt(lat_max), parseInt(lon_min), parseInt(lon_max));
+      const o3Promise = fetchO3Data(parseInt(lat_min), parseInt(lat_max), parseInt(lon_min), parseInt(lon_max));
+      const hchoPromise = fetchHCHOData(parseInt(lat_min), parseInt(lat_max), parseInt(lon_min), parseInt(lon_max));
+      const aerPromise = fetchAERData(parseInt(lat_min), parseInt(lat_max), parseInt(lon_min), parseInt(lon_max));
+      // Esperar todos los datos
+      const allDataPromise = Promise.all([
+        airQualityPromise,
+        no2Promise,
+        so2Promise,
+        o3Promise,
+        hchoPromise,
+        aerPromise
+      ]).then(([airQuality, no2, so2, o3, hcho, aer]) => ({
+        airQuality,
+        no2,
+        so2,
+        o3,
+        hcho,
+        aer
+      }));
       if (onAirQualityData) {
-        console.log('[DEBUG] Llamando a onAirQualityData desde SearchBox con:', airQualityPromise);
-        onAirQualityData(airQualityPromise);
+        onAirQualityData(allDataPromise);
       }
       onLocationSelect({
         center: [lat, lng],
