@@ -23,9 +23,8 @@ export const SearchBox = ({ onLocationSelect, positionClass }) => {
       setIsSearching(true);
       
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5`
-        );
+        const response = await fetch(`/nominatim/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=5&email=guido@example.com`);
+;
         const data = await response.json();
         setSearchResults(data);
         setShowResults(true);

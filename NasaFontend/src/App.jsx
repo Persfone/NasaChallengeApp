@@ -1,6 +1,6 @@
 // src/App.jsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 // Asegúrate de que las rutas relativas son correctas (Ej: './components/NombreComponente')
 import { SearchBox } from '/components/SearchBox'; 
 import MapZonas from '/components/MapZone'; 
@@ -9,6 +9,20 @@ import './App.css';
 
 function App() {
     const [selectedLocation, setSelectedLocation] = useState(null);
+    const [heatmapData, setHeatmapData] = useState([]);
+
+    useEffect(() => {
+        fetch('/json/heatmap_data.json')
+            .then(response => response.json())
+            .then(data => {
+                setHeatmapData(data);
+                console.log(data); // 👈 Aquí sí funciona
+            })
+            .catch(error => {
+                console.error('Error al cargar heatmap_data:', error);
+                setHeatmapData([]);
+            });
+    }, []);
 
     // Determina la clase de posición para SearchBox:
     // Posición inicial: Centrada. Se usa 'items-start' en la clase contenedora 
@@ -30,17 +44,18 @@ function App() {
                 
                 {/* Mapa */}
                 <MapZonas
-                    center={initialCenter}
-                    zoom={initialZoom}
-                    selectedLocation={selectedLocation}
-                    zonas={[/* tus zonas */]} 
+                  center={initialCenter}
+                  zoom={initialZoom}
+                  selectedLocation={selectedLocation}
+                  zonas={[]}
+                  heatmapData={heatmapData} // 👈 aquí pasamos los puntos
                 >
-                    {/* Componente SearchBox inyectado */}
-                    <SearchBox 
+                  <SearchBox 
                         onLocationSelect={handleLocationSelect} 
                         positionClass={searchBoxPosition}
                     />
                 </MapZonas>
+
 
                 {/* Menú desplegable (solapa) */}
                 <MenuDerecho>
