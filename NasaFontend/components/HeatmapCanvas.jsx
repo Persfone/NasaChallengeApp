@@ -4,7 +4,7 @@ import { useMap } from "react-leaflet";
 import L from "leaflet";
 import * as d3 from "d3";
 
-const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultiplier = 0.5 }) => {
+const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8 , intensityMultiplier = 0.5}) => {
   const map = useMap();
   const overlayRef = useRef(null);
   const hasGeneratedRef = useRef(false);
@@ -24,6 +24,7 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
       let validPoints = 0;
 
       data.forEach(p => {
+        // Verificar que las coordenadas existan y sean válidas
         if (!p.latitude || !p.longitude || 
             isNaN(p.latitude) || isNaN(p.longitude)) {
           return;
@@ -38,12 +39,14 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
 
       console.log(`Puntos válidos: ${validPoints}/${data.length}`);
 
+      console.log(`Puntos válidos: ${validPoints}/${data.length}`);
+
       if (validPoints === 0) {
         console.error("No hay puntos válidos para dibujar");
         return;
       }
 
-      // Añadir margen
+      // Añadir margen mínimo o 5% del rango
       const latMargin = Math.max((maxLat - minLat) * 0.05, 0.5);
       const lngMargin = Math.max((maxLng - minLng) * 0.05, 0.5);
       minLat -= latMargin;
@@ -52,6 +55,7 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
       maxLng += lngMargin;
 
       console.log(`Bounds: [${minLat.toFixed(2)}, ${minLng.toFixed(2)}] to [${maxLat.toFixed(2)}, ${maxLng.toFixed(2)}]`);
+      console.log(`Área: ${(maxLat - minLat).toFixed(2)}° lat x ${(maxLng - minLng).toFixed(2)}° lng`);
 
       // Crear canvas con resolución proporcional al área
       const canvas = document.createElement("canvas");
@@ -61,9 +65,11 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
       
       let width, height;
       if (aspectRatio > 1) {
+        // Más ancho que alto
         width = 3000;
         height = Math.round(3000 / aspectRatio);
       } else {
+        // Más alto que ancho
         height = 3000;
         width = Math.round(3000 * aspectRatio);
       }
@@ -76,13 +82,14 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, width, height);
 
-      // Escala de colores más exigente: 
-      // Verde (valores muy bajos) -> Amarillo (bajos) -> Naranja (medios) -> Rojo (altos)
+      // Escala de colores personalizada: Verde -> Amarillo -> Naranja suave -> Rojo suave
       const gradient = d3.scaleLinear()
-        .domain([0, 0.4, 0.7, 1])
-        .range(['#00ff00', '#ffff00', '#ff8800', '#cc0000'])
+        .domain([0, 0.33, 0.66, 1])
+        .range(['#00ff00', '#ffff00', '#ff9933', '#ff6666'])
         .interpolate(d3.interpolateRgb);
       
+      const buffer = new Float32Array(width * height);
+
       // Función para convertir lat/lng a coordenadas del canvas
       const latToY = (lat) => {
         return Math.floor(((maxLat - lat) / (maxLat - minLat)) * height);
@@ -91,85 +98,43 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
         return Math.floor(((lng - minLng) / (maxLng - minLng)) * width);
       };
 
-      // Crear grid espacial para búsqueda rápida
-      const gridSize = 50; // Tamaño de celda del grid
-      const grid = new Map();
-      
-      data.forEach((p, idx) => {
-        if (!p.latitude || !p.longitude) return;
-        
-        const x = lngToX(p.longitude);
-        const y = latToY(p.latitude);
-        const gridX = Math.floor(x / gridSize);
-        const gridY = Math.floor(y / gridSize);
-        const key = `${gridX},${gridY}`;
-        
-        if (!grid.has(key)) {
-          grid.set(key, []);
-        }
-        grid.get(key).push({ x, y, intensity: p.intensity || 1, idx });
-      });
-
-      console.log(`Grid creado con ${grid.size} celdas`);
-
-      // Buffer para el resultado final
-      const buffer = new Float32Array(width * height);
-      const hasValue = new Uint8Array(width * height);
-
-      // Procesar píxeles en lotes
-      const pixelsPerBatch = 50000;
-      let processedPixels = 0;
-      const totalPixels = width * height;
+      // Procesar puntos en lotes para no bloquear la UI
+      const batchSize = 5000;
+      let processed = 0;
 
       const processBatch = () => {
-        const end = Math.min(processedPixels + pixelsPerBatch, totalPixels);
+        const end = Math.min(processed + batchSize, data.length);
         
-        for (let i = processedPixels; i < end; i++) {
-          const px = i % width;
-          const py = Math.floor(i / width);
-          
-          // Buscar en celdas cercanas del grid
-          const gridX = Math.floor(px / gridSize);
-          const gridY = Math.floor(py / gridSize);
-          
-          let nearestDist = Infinity;
-          let nearestIntensity = 0;
-          const searchRadius = 2; // Buscar en celdas vecinas
-          
-          for (let gy = gridY - searchRadius; gy <= gridY + searchRadius; gy++) {
-            for (let gx = gridX - searchRadius; gx <= gridX + searchRadius; gx++) {
-              const key = `${gx},${gy}`;
-              const cellPoints = grid.get(key);
-              
-              if (!cellPoints) continue;
-              
-              for (const point of cellPoints) {
-                const dx = px - point.x;
-                const dy = py - point.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                if (dist < nearestDist && dist <= radius) {
-                  nearestDist = dist;
-                  nearestIntensity = point.intensity;
-                }
-              }
+        for (let i = processed; i < end; i++) {
+          const p = data[i];
+          if (!p.latitude || !p.longitude) continue;
+
+          const x = lngToX(p.longitude);
+          const y = latToY(p.latitude);
+          const intensity = (p.intensity || 1) * 10; // Multiplicador de intensidad
+          const r = radius;
+          const r2 = r * r;
+
+          for (let dy = -r; dy <= r; dy++) {
+            for (let dx = -r; dx <= r; dx++) {
+              const dist2 = dx * dx + dy * dy;
+              if (dist2 > r2) continue;
+
+              const xx = x + dx;
+              const yy = y + dy;
+
+              if (xx < 0 || yy < 0 || xx >= width || yy >= height) continue;
+
+              const weight = Math.exp(-dist2 / (2 * r2)) * intensity;
+              buffer[yy * width + xx] += weight;
             }
-          }
-          
-          // Si encontramos un punto cercano, usar interpolación suave
-          if (nearestDist <= radius) {
-            // Interpolación suave basada en distancia
-            const falloff = 1 - (nearestDist / radius);
-            buffer[i] = nearestIntensity * Math.pow(falloff, 0.5); // Suavizado moderado
-            hasValue[i] = 1;
           }
         }
 
-        processedPixels = end;
+        processed = end;
 
-        if (processedPixels < totalPixels) {
-          const progress = ((processedPixels / totalPixels) * 100).toFixed(1);
-          console.log(`Procesado ${progress}% de píxeles...`);
+        if (processed < data.length) {
+          console.log(`Procesado ${processed}/${data.length} puntos...`);
           setTimeout(processBatch, 0);
         } else {
           finishHeatmap();
@@ -179,45 +144,32 @@ const HeatmapCanvas = ({ data = [], radius = 30, opacity = 0.8, intensityMultipl
       const finishHeatmap = () => {
         console.log("Aplicando colores...");
 
-        // Encontrar rango real de valores
-        const values = [];
+        // Encontrar máximo y calcular percentil para evitar outliers
+        const nonZeroValues = [];
         for (let i = 0; i < buffer.length; i++) {
-          if (hasValue[i] && buffer[i] > 0) {
-            values.push(buffer[i]);
-          }
+          if (buffer[i] > 0) nonZeroValues.push(buffer[i]);
         }
         
-        values.sort((a, b) => a - b);
+        nonZeroValues.sort((a, b) => a - b);
         
-        const minVal = values[0] || 0.00001;
-        const maxVal = values[values.length - 1] || 1;
-        // Usar percentil 95 en lugar de 98 para ser más estricto
-        const p95 = values[Math.floor(values.length * 0.95)] || maxVal;
-        const p50 = values[Math.floor(values.length * 0.5)] || minVal;
+        // Usar percentil 98 en lugar de 95 para menos saturación
+        const percentile98Index = Math.floor(nonZeroValues.length * 0.98);
+        const max = nonZeroValues[percentile98Index] || nonZeroValues[nonZeroValues.length - 1] || 1;
         
-        // Calcular rango logarítmico
-        const logMin = Math.log10(Math.max(minVal, 1e-10));
-        const logP95 = Math.log10(Math.max(p95, 1e-10));
-        const logRange = logP95 - logMin;
-        
-        console.log(`Valores: min=${minVal.toExponential(2)}, max=${maxVal.toExponential(2)}, p50=${p50.toExponential(2)}, p95=${p95.toExponential(2)}`);
-        console.log(`Rango logarítmico: ${logMin.toFixed(2)} a ${logP95.toFixed(2)} (span: ${logRange.toFixed(2)})`);
-        console.log(`Píxeles con datos: ${values.length}/${buffer.length} (${(values.length/buffer.length*100).toFixed(2)}%)`);
+        console.log(`Valores: min=${nonZeroValues[0]?.toFixed(4)}, max=${nonZeroValues[nonZeroValues.length-1]?.toFixed(4)}, p98=${max.toFixed(4)}`);
 
         const img = ctx.createImageData(width, height);
 
         for (let i = 0; i < buffer.length; i++) {
-          if (!hasValue[i] || buffer[i] === 0) continue;
+          let norm = buffer[i] / max;
+          if (norm === 0) continue;
           
-          // Normalización LOGARÍTMICA usando p95 como máximo
-          const logVal = Math.log10(Math.max(buffer[i], 1e-10));
-          let norm = (logVal - logMin) / logRange;
-          
-          if (norm < 0) norm = 0;
+          // Clamp a 1 para valores extremos
           if (norm > 1) norm = 1;
           
-          // Curva más agresiva: valores bajos más verdes, solo altos en rojo
-          norm = Math.pow(norm, 2.0);
+          // Aplicar curva logarítmica para mejor distribución de colores
+          // Valores bajos se ven mejor, valores altos no saturan tanto
+          norm = Math.log(1 + norm * 9) / Math.log(10); // log10(1 + 9*norm)
 
           const color = d3.color(gradient(norm));
           const idx = i * 4;
