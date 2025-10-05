@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import {fetchAirQualityInArea} from './funcionesFetch';
 
-export const SearchBox = ({ onLocationSelect, positionClass }) => {
+export const SearchBox = ({ onLocationSelect, positionClass, onAirQualityData }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -54,16 +54,21 @@ export const SearchBox = ({ onLocationSelect, positionClass }) => {
       const lat = parseFloat(result.lat);
       const lng = parseFloat(result.lon);
       console.log('Ubicación seleccionada:', lat, lng, result.display_name);
-      console.log('Esquina Noreste:', getMapCorners([lat, lng], 12).noreste);
-      console.log('Esquina Suroeste:', getMapCorners([lat, lng], 12).suroeste);
-      console.log('Datos de calidad del aire en el área:', fetchAirQualityInArea(`${getMapCorners([lat, lng], 12).suroeste[1].toFixed(3)},${getMapCorners([lat, lng], 12).suroeste[0].toFixed(3)},${getMapCorners([lat, lng], 12).noreste[1].toFixed(3)},${getMapCorners([lat, lng], 12).noreste[0].toFixed(3)}`, 50, 'distributed'));
-      
+      const corners = getMapCorners([lat, lng], 12);
+      console.log('Esquina Noreste:', corners.noreste);
+      console.log('Esquina Suroeste:', corners.suroeste);
+      const bbox = `${corners.suroeste[1].toFixed(3)},${corners.suroeste[0].toFixed(3)},${corners.noreste[1].toFixed(3)},${corners.noreste[0].toFixed(3)}`;
+      const airQualityPromise = fetchAirQualityInArea(bbox, 50, 'distributed');
+      console.log('Datos de calidad del aire en el área:', airQualityPromise);
+      if (onAirQualityData) {
+        console.log('[DEBUG] Llamando a onAirQualityData desde SearchBox con:', airQualityPromise);
+        onAirQualityData(airQualityPromise);
+      }
       onLocationSelect({
         center: [lat, lng],
         zoom: 12, // Zoom fijado
         name: result.display_name
       });
-      
       setSearchQuery(result.display_name);
       setShowResults(false);
     };
